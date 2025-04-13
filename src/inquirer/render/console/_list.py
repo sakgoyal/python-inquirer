@@ -1,3 +1,4 @@
+from typing import Any
 from readchar import key
 
 from inquirer import errors
@@ -5,10 +6,13 @@ from inquirer.render.console._other import GLOBAL_OTHER_CHOICE
 from inquirer.render.console.base import MAX_OPTIONS_DISPLAYED_AT_ONCE
 from inquirer.render.console.base import BaseConsoleRender
 from inquirer.render.console.base import half_options
+from ...themes import ThemeError
+from inquirer.questions import List as ListQuestion
 
 
 class List(BaseConsoleRender):
-    def __init__(self, *args, **kwargs):
+
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.current = self._current_index()
 
@@ -17,14 +21,17 @@ class List(BaseConsoleRender):
         choices = self.question.choices or []
         return len(choices) >= MAX_OPTIONS_DISPLAYED_AT_ONCE
 
-    def get_hint(self):
+    def get_hint(self) -> str:
         try:
             choice = self.question.choices[self.current]
+            # if not self.question.hints:
+            #     raise KeyError()
+            # if not isinstance(choice, str):
+            #     raise KeyError()
             hint = self.question.hints[choice]
             if hint:
                 return f"{choice}: {hint}"
-            else:
-                return f"{choice}"
+            return f"{choice}"
         except (KeyError, IndexError):
             return ""
 
@@ -49,6 +56,8 @@ class List(BaseConsoleRender):
         is_in_beginning = self.current <= half_options
         is_in_middle = half_options < self.current < ending_milestone
         is_in_end = self.current >= ending_milestone
+        if not self.theme:
+            raise ThemeError("Theme not set.")
 
         for index, choice in enumerate(cchoices):
             end_index = ending_milestone + index - half_options - 1
@@ -64,7 +73,7 @@ class List(BaseConsoleRender):
                 symbol = " " if choice == GLOBAL_OTHER_CHOICE else " " * len(self.theme.List.selection_cursor)
             yield choice, symbol, color
 
-    def process_input(self, pressed):
+    def process_input(self, pressed: str):
         question = self.question
         if pressed == key.UP:
             if question.carousel and self.current == 0:

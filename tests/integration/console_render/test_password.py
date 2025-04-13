@@ -1,13 +1,12 @@
-import unittest
-
 from readchar import key
 
-import inquirer
-import tests.integration.console_render.helper as helper
 from inquirer.render import ConsoleRender
+from inquirer.questions import Password
+from inquirer.errors import ValidationError
+from tests.integration.console_render import helper
 
 
-class PasswordRenderTest(unittest.TestCase, helper.BaseTestCase):
+class PasswordRenderTest(helper.BaseTestCase):
     def setUp(self):
         self.base_setup()
 
@@ -19,7 +18,7 @@ class PasswordRenderTest(unittest.TestCase, helper.BaseTestCase):
         message = "Foo message"
         variable = "Bar variable"
 
-        question = inquirer.questions.Password(variable, message)
+        question = Password(variable, message)
 
         sut = ConsoleRender(event_generator=stdin)
         sut.render(question)
@@ -33,7 +32,7 @@ class PasswordRenderTest(unittest.TestCase, helper.BaseTestCase):
         message = "Foo message"
         variable = "Bar variable"
 
-        question = inquirer.questions.Password(variable, message)
+        question = Password(variable, message)
 
         sut = ConsoleRender(event_generator=stdin)
         result = sut.render(question)
@@ -57,7 +56,7 @@ class PasswordRenderTest(unittest.TestCase, helper.BaseTestCase):
         message = "Foo message"
         variable = "Bar variable"
 
-        question = inquirer.questions.Password(variable, message)
+        question = Password(variable, message)
 
         sut = ConsoleRender(event_generator=stdin)
         result = sut.render(question)
@@ -70,7 +69,7 @@ class PasswordRenderTest(unittest.TestCase, helper.BaseTestCase):
         message = "Foo message"
         variable = "Bar variable"
 
-        question = inquirer.questions.Password(variable, message)
+        question = Password(variable, message)
 
         sut = ConsoleRender(event_generator=stdin)
         with self.assertRaises(KeyboardInterrupt):
@@ -84,7 +83,7 @@ class PasswordRenderTest(unittest.TestCase, helper.BaseTestCase):
         def validate(answers, current):
             return False
 
-        question = inquirer.questions.Password(variable, message, validate=validate)
+        question = Password(variable, message, validate=validate)
 
         sut = ConsoleRender(event_generator=stdin)
         with self.assertRaises(StopIteration):
@@ -96,9 +95,9 @@ class PasswordRenderTest(unittest.TestCase, helper.BaseTestCase):
         variable = "Bar variable"
 
         def validate(answers, current):
-            raise inquirer.errors.ValidationError("", reason="some reason")
+            raise ValidationError("", reason="some reason")
 
-        question = inquirer.questions.Password(variable, message, validate=validate)
+        question = Password(variable, message, validate=validate)
 
         sut = ConsoleRender(event_generator=stdin)
         with self.assertRaises(StopIteration):

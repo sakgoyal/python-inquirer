@@ -1,15 +1,14 @@
+from __future__ import annotations
 import collections
 import json
 
+from typing import TypedDict
 from blessed import Terminal
-
-import inquirer.errors as errors
-
 
 term = Terminal()
 
 
-def load_theme_from_json(json_theme):
+def load_theme_from_json(json_theme: str | bytes | bytearray) -> Theme:
     """Load a theme from a json.
 
     Expected format:
@@ -30,7 +29,7 @@ def load_theme_from_json(json_theme):
     return load_theme_from_dict(json.loads(json_theme))
 
 
-def load_theme_from_dict(dict_theme):
+def load_theme_from_dict(dict_theme: Loader) -> Theme:
     """Load a theme from a dict.
 
     Expected format:
@@ -46,9 +45,15 @@ def load_theme_from_dict(dict_theme):
         ...     }
         ... }
 
-    Color values should be string representing valid blessings.Terminal colors.
+    Color values should be string representing valid blessings.Terminal colors and fallback to the given color
     """
-    t = Default()
+    t = Theme()
+    # This does not use the Terminal colors
+    # t.Question.update(dict_theme.get("Question") or {})
+    # t.Editor  .update(dict_theme.get("Editor") or {})
+    # t.Checkbox.update(dict_theme.get("Checkbox") or {})
+    # t.List    .update(dict_theme.get("List") or {})
+    # we need to transform them to terminal color values first
     for question_type, settings in dict_theme.items():
         if question_type not in vars(t):
             raise errors.ThemeError(
@@ -69,6 +74,52 @@ def load_theme_from_dict(dict_theme):
     return t
 
 
+# Current problem is that TypedDict does not support Partial types
+# load_theme_from_dict({
+#     "Question": {
+#         "mark_color": "yellow",
+#     },
+# })
+# so its not possible to update only some fields of the dict
+# without having to specify all of them unless we use a workaround like this:
+# class QuestionThemePartial(TypedDict, total=False)
+# but this will make it impossible to use the dict as a normal TypedDict
+# because all fields will be optional forever
+
+
+class Loader(TypedDict, total=False):
+    Question: QuestionTheme
+    Editor: EditorTheme
+    Checkbox: CheckboxTheme
+    List: ListTheme
+
+
+class QuestionTheme(TypedDict):
+    mark_color: str
+    brackets_color: str
+    default_color: str
+
+
+class EditorTheme(TypedDict):
+    opening_prompt: str
+
+
+class CheckboxTheme(TypedDict):
+    selection_color: str
+    selection_icon: str
+    selected_color: str
+    unselected_color: str
+    selected_icon: str
+    unselected_icon: str
+    locked_option_color: str
+
+
+class ListTheme(TypedDict):
+    selection_color: str
+    selection_cursor: str
+    unselected_color: str
+
+
 class Theme:
     def __init__(self):
         self.Question = collections.namedtuple("question", "mark_color brackets_color default_color")
@@ -79,11 +130,6 @@ class Theme:
             "selected_icon unselected_icon locked_option_color",
         )
         self.List = collections.namedtuple("List", "selection_color selection_cursor unselected_color")
-
-
-class Default(Theme):
-    def __init__(self):
-        super().__init__()
         self.Question.mark_color = term.yellow
         self.Question.brackets_color = term.normal
         self.Question.default_color = term.normal
@@ -100,7 +146,7 @@ class Default(Theme):
         self.List.unselected_color = term.normal
 
 
-class GreenPassion(Default):
+class GreenPassion(Theme):
     def __init__(self):
         super().__init__()
         self.Question.brackets_color = term.bright_green
@@ -113,7 +159,7 @@ class GreenPassion(Default):
         self.List.selection_cursor = "❯"
 
 
-class BlueComposure(Default):
+class BlueComposure(Theme):
     def __init__(self):
         super().__init__()
         self.Question.brackets_color = term.dodgerblue
@@ -125,3 +171,7 @@ class BlueComposure(Default):
         self.Checkbox.unselected_icon = "☐"
         self.List.selection_color = term.bold_black_on_darkslategray3
         self.List.selection_cursor = "➤"
+
+
+class ThemeError(AttributeError):
+    pass

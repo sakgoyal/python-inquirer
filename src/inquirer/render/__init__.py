@@ -1,15 +1,13 @@
+from __future__ import annotations
+from typing import Any
 from inquirer.render.console import ConsoleRender
-
-
-try:
-    from .ncourses import CoursesRender  # noqa
-except ImportError:
-    pass
+from inquirer.questions import Question
 
 
 class Render:
-    def __init__(self, impl=ConsoleRender):
+    def __init__(self, impl: type[ConsoleRender] = ConsoleRender):
         self._impl = impl
 
-    def render(self, question, answers):
+    def render(self, question: Question, answers: dict[str, Any] | None = None) -> Any:
+        # TODO: figure out the inheritance chain here and uncomplicate this
         return self._impl.render(question, answers)

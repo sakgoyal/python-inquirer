@@ -1,8 +1,6 @@
-from unittest.mock import Mock
-
 import pytest
-
-import inquirer.shortcuts as shortcuts
+from unittest.mock import Mock
+from inquirer import shortcuts
 
 
 @pytest.fixture()
@@ -24,7 +22,7 @@ def render_mock():
         (shortcuts.path, "path", "path message"),
     ],
 )
-def test_shortcuts(func, kind, message, render_mock):
+def test_shortcuts(func, kind: str, message: str, render_mock):
     q = func(message, render=render_mock)
 
     assert q.kind == kind

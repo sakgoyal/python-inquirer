@@ -4,59 +4,71 @@ from __future__ import annotations
 
 import json
 import pathlib
+from typing import Any, Callable, Literal, Sequence, cast
 
-import inquirer.errors as errors
-from inquirer.render.console._other import GLOBAL_OTHER_CHOICE
+from inquirer import errors
+from inquirer.render.console._other import GLOBAL_OTHER_CHOICE, OtherChoice
 
 
-class TaggedValue:
-    def __init__(self, tag, value):
+type ValidatorType = bool | Callable[[dict[str, Any], Any], bool]
+type MessageType = str | Callable[[dict[str, Any]], str]
+type ChoiceType[T: Any] = int | str | tuple[str, T] | OtherChoice
+type IgnoreType = bool | Callable[[Any], bool] | Callable[[Any], None]
+
+
+class TaggedValue[T]:
+    def __init__(self, tag: str, value: T):
         self.tag = tag
         self.value = value
         self.tuple = (tag, value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.tag
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return repr(self.value)
 
-    def __eq__(self, other):
+    def __eq__(self, other: tuple[str, T] | TaggedValue[T]) -> bool:
         if isinstance(other, TaggedValue):
-            return other.value == self.value
+            return (
+                other.value == self.value
+            )  # error here because type of other is not known. TaggedValue[T] is not runtime
         if isinstance(other, tuple):
             return other == self.tuple
         return other == self.value
 
-    def __ne__(self, other):
+    def __ne__(self, other: Any) -> bool:
         return not self.__eq__(other)
 
-    def __hash__(self) -> int:
+    def __hash__(self):
         return hash(self.tuple)
 
 
+type QuestionKind = Literal["text", "editor", "password", "confirm", "list", "checkbox", "path"]
+
+
 class Question:
-    kind = "base question"
+    kind: QuestionKind
 
     def __init__(
         self,
-        name,
-        message="",
-        choices=None,
-        default=None,
-        ignore=False,
-        validate=True,
-        show_default=False,
-        hints=None,
-        other=False,
+        name: str,
+        message: MessageType = "",
+        choices: Sequence[ChoiceType[Any]] | None = None,
+        default: bool | str | list[str] | Callable[[Any], bool | str] | None = None,
+        ignore: IgnoreType = False,
+        validate: ValidatorType = True,
+        show_default: bool = False,
+        hints: dict[str, str] | None = None,
+        other: bool = False,
     ):
         self.name = name
         self._message = message
-        self._choices = choices or []
+        self._choices: list[ChoiceType[Any]] = list(choices or [])
         self._default = default
         self._ignore = ignore
         self._validate = validate
-        self.answers = {}
+        self.answers: dict[str, str] = {}
         self.show_default = show_default
         self.hints = hints
         self._other = other
@@ -64,7 +76,7 @@ class Question:
         if self._other:
             self._choices.append(GLOBAL_OTHER_CHOICE)
 
-    def add_choice(self, choice):
+    def add_choice(self, choice: str | tuple[str, str]) -> int:
         try:
             index = self._choices.index(choice)
             return index
@@ -77,7 +89,7 @@ class Question:
             return len(self._choices) - 1
 
     @property
-    def ignore(self):
+    def ignore(self) -> bool:
         return bool(self._solve(self._ignore))
 
     @property
@@ -94,10 +106,10 @@ class Question:
             yield (TaggedValue(*choice) if isinstance(choice, tuple) and len(choice) == 2 else choice)
 
     @property
-    def choices(self):
+    def choices(self) -> Sequence[ChoiceType[Any]]:
         return list(self.choices_generator)
 
-    def validate(self, current):
+    def validate(self, current: Sequence[ChoiceType[Any]]):
         try:
             if self._solve(self._validate, current):
                 return
@@ -105,7 +117,9 @@ class Question:
             raise e
         raise errors.ValidationError(current)
 
-    def _solve(self, prop, *args, **kwargs):
+    def _solve(
+        self, prop: Callable[[dict[str, str]], Any] | str | Any, *args: Sequence[ChoiceType[Any]], **kwargs: Any
+    ):
         if callable(prop):
             return prop(self.answers, *args, **kwargs)
         if isinstance(prop, str):
@@ -116,7 +130,14 @@ class Question:
 class Text(Question):
     kind = "text"
 
-    def __init__(self, name, message="", default=None, autocomplete=None, **kwargs):
+    def __init__(
+        self,
+        name: str,
+        message: MessageType = "",
+        default: bool | str | Callable[[Any], bool | str] | None = None,
+        autocomplete: Callable[[str, int], str | None] | None = None,
+        **kwargs: Any,
+    ):
         super().__init__(
             name, message=message, default=str(default) if default and not callable(default) else default, **kwargs
         )
@@ -126,7 +147,7 @@ class Text(Question):
 class Password(Text):
     kind = "password"
 
-    def __init__(self, name, echo="*", **kwargs):
+    def __init__(self, name: str, echo: str = "*", **kwargs: Any):
         super().__init__(name, **kwargs)
         self.echo = echo
 
@@ -138,7 +159,7 @@ class Editor(Text):
 class Confirm(Question):
     kind = "confirm"
 
-    def __init__(self, name, default=False, **kwargs):
+    def __init__(self, name: str, default: bool | str = False, **kwargs: Any):
         super().__init__(name, default=default, **kwargs)
 
 
@@ -147,16 +168,16 @@ class List(Question):
 
     def __init__(
         self,
-        name,
-        message="",
-        choices=None,
-        hints=None,
-        default=None,
-        ignore=False,
-        validate=True,
-        carousel=False,
-        other=False,
-        autocomplete=None,
+        name: str,
+        message: MessageType = "",
+        choices: Sequence[ChoiceType[Any]] | None = None,
+        hints: dict[str, str] | None = None,
+        default: Any = None,
+        ignore: IgnoreType = False,
+        validate: ValidatorType = True,
+        carousel: bool = False,
+        other: bool = False,
+        autocomplete: Callable[[str, int], str | None] | None = None,
     ):
         super().__init__(name, message, choices, default, ignore, validate, hints=hints, other=other)
         self.carousel = carousel
@@ -168,17 +189,17 @@ class Checkbox(Question):
 
     def __init__(
         self,
-        name,
-        message="",
-        choices=None,
-        hints=None,
-        locked=None,
-        default=None,
-        ignore=False,
-        validate=True,
-        carousel=False,
-        other=False,
-        autocomplete=None,
+        name: str,
+        message: MessageType = "",
+        choices: Sequence[ChoiceType[Any]] | None = None,
+        hints: dict[str, str] | None = None,
+        locked: list[str] | None = None,
+        default: list[str] | None = None,
+        ignore: IgnoreType = False,
+        validate: ValidatorType = True,
+        carousel: bool = False,
+        other: bool = False,
+        autocomplete: Callable[[str, int], str | None] | None = None,
     ):
         super().__init__(name, message, choices, default, ignore, validate, hints=hints, other=other)
         self.locked = locked
@@ -193,13 +214,20 @@ class Path(Text):
 
     kind = "path"
 
-    def __init__(self, name, default=None, path_type="any", exists=None, **kwargs):
+    def __init__(
+        self,
+        name: str,
+        default: str | None = None,
+        path_type: Literal["any", "file", "directory"] = "any",
+        exists: bool | None = None,
+        **kwargs: Any,
+    ):
         super().__init__(name, default=default, **kwargs)
 
         if path_type in (Path.ANY, Path.FILE, Path.DIRECTORY):
             self._path_type = path_type
         else:
-            raise ValueError("'path_type' must be one of [ANY, FILE, DIRECTORY]")
+            raise ValueError("'path_type' must be one of ['any' | 'file' | 'directory']")
 
         self._exists = exists
 
@@ -209,7 +237,7 @@ class Path(Text):
             except errors.ValidationError:
                 raise ValueError("Default value '{}' is not valid based on " "your Path's criteria".format(default))
 
-    def validate(self, current: str):
+    def validate(self, current: str | None) -> None:
         super().validate(current)
 
         if current is None:
@@ -244,14 +272,16 @@ class Path(Text):
                 raise errors.ValidationError(current)
 
 
-def question_factory(kind, *args, **kwargs):
+def question_factory(kind: QuestionKind, *args: Any, **kwargs: Any) -> Question:
+    # if 'name' not in args and 'name' not in kwargs:
+    #     raise errors.ValidationError("name", "Name is required for all questions.")
     for cl in (Text, Editor, Password, Confirm, List, Checkbox, Path):
         if cl.kind == kind:
             return cl(*args, **kwargs)
     raise errors.UnknownQuestionTypeError()
 
 
-def load_from_dict(question_dict) -> Question:
+def load_from_dict(question_dict: dict[str, Any]) -> Question:
     """Load one question from a dict.
 
     It requires the keys 'name' and 'kind'.
@@ -262,7 +292,7 @@ def load_from_dict(question_dict) -> Question:
     return question_factory(**question_dict)
 
 
-def load_from_list(question_list) -> list[Question]:
+def load_from_list(question_list: list[dict[str, Any]]) -> list[Question]:
     """Load a list of questions from a list of dicts.
 
     It requires the keys 'name' and 'kind' for each dict.
@@ -273,7 +303,7 @@ def load_from_list(question_list) -> list[Question]:
     return [load_from_dict(q) for q in question_list]
 
 
-def load_from_json(question_json) -> list | dict:
+def load_from_json(question_json: str | bytes | bytearray) -> list[Question] | Question:
     """Load Questions from a JSON string.
 
     Returns:
@@ -282,7 +312,7 @@ def load_from_json(question_json) -> list | dict:
     """
     data = json.loads(question_json)
     if isinstance(data, list):
-        return load_from_list(data)
+        return load_from_list(cast(list[dict[str, Any]], data))
     if isinstance(data, dict):
-        return load_from_dict(data)
-    raise TypeError("Json contained a %s variable when a dict or list was expected", type(data))
+        return load_from_dict(cast(dict[str, Any], data))
+    raise TypeError(f"Json contained a {type(data)} variable when a dict or list was expected")

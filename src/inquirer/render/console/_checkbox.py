@@ -1,3 +1,5 @@
+from typing import Any
+
 from readchar import key
 
 from inquirer import errors
@@ -5,28 +7,32 @@ from inquirer.render.console._other import GLOBAL_OTHER_CHOICE
 from inquirer.render.console.base import MAX_OPTIONS_DISPLAYED_AT_ONCE
 from inquirer.render.console.base import BaseConsoleRender
 from inquirer.render.console.base import half_options
+from ...themes import ThemeError
+from ...questions import ChoiceType
+from inquirer.questions import Checkbox as CheckboxQuestion
 
 
 class Checkbox(BaseConsoleRender):
-    def __init__(self, *args, **kwargs):
+
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.locked = self.question.locked or []
         self.selection = [k for (k, v) in enumerate(self.question.choices) if v in self.default_choices()]
         self.current = 0
 
-    def get_hint(self):
+    def get_hint(self) -> str:
         try:
             hint = self.question.hints[self.question.choices[self.current]]
             return hint or ""
         except KeyError:
             return ""
 
-    def default_choices(self):
+    def default_choices(self) -> list[ChoiceType[Any]]:
         default = self.question.default or []
         return default + self.locked
 
     @property
-    def is_long(self):
+    def is_long(self) -> bool:
         choices = self.question.choices or []
         return len(choices) >= MAX_OPTIONS_DISPLAYED_AT_ONCE
 
@@ -81,7 +87,7 @@ class Checkbox(BaseConsoleRender):
 
             yield choice, selector + " " + symbol, color
 
-    def process_input(self, pressed):
+    def process_input(self, pressed: str) -> None:
         question = self.question
         is_current_choice_locked = question.choices[self.current] in self.locked
         if pressed == key.UP:
@@ -126,7 +132,7 @@ class Checkbox(BaseConsoleRender):
         elif pressed == key.CTRL_C:
             raise KeyboardInterrupt()
 
-    def other_input(self):
+    def other_input(self) -> None:
         other = super().other_input()
 
         # Clear the print that inquirer.text made

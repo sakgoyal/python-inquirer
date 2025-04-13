@@ -1,6 +1,7 @@
 import pathlib
 import shutil
 import tempfile
+from typing import Literal
 import unittest
 import sys
 
@@ -126,7 +127,7 @@ class BaseQuestionTests(unittest.TestCase):
     def test_validate_function_raising_validation_error(self):
         err = errors.ValidationError("", reason="foo")
 
-        def raise_exc(x, y):
+        def raise_exc[T](x: T, y: T):
             raise err
 
         name = "foo"
@@ -140,7 +141,7 @@ class BaseQuestionTests(unittest.TestCase):
     def test_validate_function_receives_object(self):
         expected = object()
 
-        def compare(x, y):
+        def compare[T](_x: T, y: T):
             return expected == y
 
         name = "foo"
@@ -206,8 +207,8 @@ class BaseQuestionTests(unittest.TestCase):
 
     def test_load_from_json_text_type(self):
         name = "foo"
-        q = questions.load_from_json('{"kind": "text", "name": "%s"}' % name)
-
+        q = questions.load_from_json(f'{"kind": "text", "name": "{name}"}')
+        assert isinstance(q, questions.Text)
         self.assertEqual("text", q.kind)
         self.assertIsInstance(q, questions.Text)
         self.assertEqual(name, q.name)
@@ -215,12 +216,12 @@ class BaseQuestionTests(unittest.TestCase):
     def test_factory_bad_type(self):
         name = "foo"
         with self.assertRaises(errors.UnknownQuestionTypeError):
-            questions.question_factory("bad", name)
+            questions.question_factory("bad", name)  # type: ignore
 
     def test_load_from_json_list(self):
         name = "foo"
         result = questions.load_from_json('[{"kind": "text", "name": "%s"}]' % name)
-
+        assert isinstance(result, list)
         self.assertIsInstance(result, list)
         self.assertEqual(1, len(result))
         self.assertEqual("text", result[0].kind)
@@ -238,7 +239,7 @@ class TestConfirmQuestion(unittest.TestCase):
 
 class TestPathQuestion(unittest.TestCase):
     def test_path_validation(self):
-        def do_test(path, result=True):
+        def do_test(path: str | None, result: bool = True):
             q = questions.Path("validation_test")
             if result:
                 self.assertIsNone(q.validate(path))
@@ -266,7 +267,7 @@ class TestPathQuestion(unittest.TestCase):
                 q.validate(path)
 
     def test_path_type_validation_no_existence_check(self):
-        def do_test(path_type, path, result=True):
+        def do_test(path_type: Literal["any", "file", "directory"], path: str, result: bool = True):
             q = questions.Path("path_type_test", path_type=path_type)
             if result:
                 self.assertIsNone(q.validate(path))
@@ -309,7 +310,7 @@ class TestPathQuestion(unittest.TestCase):
         some_existing_file = root / "some_file"
         some_existing_file.touch()
 
-        def do_test(path_type, path, result=True):
+        def do_test(path_type: Literal["any", "file", "directory"], path: str | pathlib.Path, result: bool = True):
             q = questions.Path("path_type_test", exists=True, path_type=path_type)
             if result:
                 self.assertIsNone(q.validate(str(path)))

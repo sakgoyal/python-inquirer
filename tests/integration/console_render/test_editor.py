@@ -1,15 +1,12 @@
-import unittest
 from unittest.mock import patch
-
 from readchar import key
-
-import inquirer.questions as questions
-import tests.integration.console_render.helper as helper
+from inquirer import questions
 from inquirer import errors
 from inquirer.render import ConsoleRender
+from tests.integration.console_render import helper
 
 
-class EditorRenderTest(unittest.TestCase, helper.BaseTestCase):
+class EditorRenderTest(helper.BaseTestCase):
     def setUp(self):
         self.base_setup()
 
@@ -58,7 +55,7 @@ class EditorRenderTest(unittest.TestCase, helper.BaseTestCase):
         variable = "foo"
         expected = "Two\nLines\nCool"
 
-        def val(_, x):
+        def val(_, x: str):
             return x.count("\n") >= 2
 
         question = questions.Editor(variable, validate=val, message=message)

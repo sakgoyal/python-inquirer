@@ -3,7 +3,6 @@ import unittest
 
 from blessed import Terminal
 
-from inquirer import errors
 from inquirer import themes
 
 
@@ -32,12 +31,12 @@ class ThemeTests(unittest.TestCase):
         assert theme.List.selection_cursor == "->"
 
     def test_invalid_question_field(self):
-        with self.assertRaises(errors.ThemeError) as error:
+        with self.assertRaises(themes.ThemeError) as error:
             themes.load_theme_from_dict(self.theme_dict_wrong_field)
         assert "ark_color" in str(error.exception)
 
     def test_invalid_question(self):
-        with self.assertRaises(errors.ThemeError) as error:
+        with self.assertRaises(themes.ThemeError) as error:
             themes.load_theme_from_dict(self.theme_dict_wrong_question)
         assert "questionn" in str(error.exception)
 

@@ -1,15 +1,11 @@
 import re
-import unittest
-
 from readchar import key
-
-import inquirer.questions as questions
-import tests.integration.console_render.helper as helper
-from inquirer import errors
+from inquirer import questions, errors
 from inquirer.render import ConsoleRender
+from tests.integration.console_render import helper
 
 
-class TextRenderTest(unittest.TestCase, helper.BaseTestCase):
+class TextRenderTest(helper.BaseTestCase):
     def setUp(self):
         self.base_setup()
 
@@ -85,7 +81,7 @@ class TextRenderTest(unittest.TestCase, helper.BaseTestCase):
         variable = "foo"
         expected = "9999"
 
-        def raise_exc(x, current):
+        def raise_exc(_, current: str):
             if current != "9999":
                 raise errors.ValidationError("", reason="Custom error")
             return True
@@ -193,9 +189,9 @@ class TextRenderTest(unittest.TestCase, helper.BaseTestCase):
         message = "Foo message"
         variable = "Bar variable"
 
-        prev_state_cell = None
+        prev_state_cell: int | None = None
 
-        def autocomplete_func(text, state):
+        def autocomplete_func(text: str, state: int):
             nonlocal prev_state_cell
 
             # Swap state memory

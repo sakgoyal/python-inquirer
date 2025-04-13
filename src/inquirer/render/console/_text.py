@@ -1,13 +1,16 @@
+from typing import Any
+
 from readchar import key
 
 from inquirer import errors
 from inquirer.render.console.base import BaseConsoleRender
+from inquirer.questions import Text as TextQuestion
 
 
 class Text(BaseConsoleRender):
-    title_inline = True
+    title_inline: bool = True
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.current = self.question.default or ""
         self.cursor_offset = 0

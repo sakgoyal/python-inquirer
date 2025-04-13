@@ -4,7 +4,7 @@ import inquirer
 suggestions = ["inquirer", "hello", "world", "foo", "bar", "baz", "qux"]
 
 
-def autocomplete_fn(_text, state):
+def autocomplete_fn(_text: str, state: int):
     # Every time the user presses TAB, we'll switch to the next suggestion
     # The `state` variable contains the index of the current suggestion
     # We can wrap it around to the first suggestion if we reach the end

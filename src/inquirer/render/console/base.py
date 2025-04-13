@@ -1,17 +1,29 @@
+from __future__ import annotations
+from abc import abstractmethod
+from typing import Any, Generator
 from blessed import Terminal
 
-import inquirer
+from inquirer.errors import ValidationError
+from inquirer.questions import ChoiceType, Question
+from inquirer.themes import Theme
 
 
-# Should be odd number as there is always one question selected
-MAX_OPTIONS_DISPLAYED_AT_ONCE = 13
-half_options = int((MAX_OPTIONS_DISPLAYED_AT_ONCE - 1) / 2)
+MAX_OPTIONS_DISPLAYED_AT_ONCE = 15
+half_options = int(MAX_OPTIONS_DISPLAYED_AT_ONCE / 2)
 
 
 class BaseConsoleRender:
-    title_inline = False
+    title_inline: bool = False
 
-    def __init__(self, question, theme=None, terminal=None, show_default=False, *args, **kwargs):
+    def __init__(
+        self,
+        question: Question,
+        theme: Theme | None = None,
+        terminal: Terminal | None = None,
+        show_default: bool = False,
+        *args: Any,
+        **kwargs: Any,
+    ):
         super().__init__(*args, **kwargs)
         self.question = question
         self.terminal = terminal or Terminal()
@@ -20,25 +32,27 @@ class BaseConsoleRender:
         self.show_default = show_default
 
     def other_input(self):
-        other = inquirer.text(self.question.message, autocomplete=self.question.autocomplete)
+        from inquirer.shortcuts import text  # Avoiding circular import
+
+        other = text(self.question.message, autocomplete=getattr(self.question, "autocomplete", None))
         return other
 
     def get_header(self):
         return self.question.message
 
-    def get_hint(self):
+    def get_hint(self) -> str:
         return ""
 
-    def get_current_value(self):
+    def get_current_value(self) -> str:
         return ""
 
     def get_options(self):
         return []
 
-    def process_input(self, pressed):
-        raise NotImplementedError("Abstract")
+    @abstractmethod
+    def process_input(self, pressed: str) -> None: ...
 
-    def handle_validation_error(self, error):
+    def handle_validation_error(self, error: ValidationError) -> str:
         if error.reason:
             return error.reason
 
