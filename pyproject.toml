@@ -3,7 +3,7 @@ name = "inquirer"
 version = "3.4.0"
 description = "Collection of common interactive command line user interfaces, based on Inquirer.js"
 authors = [{name = "Miguel Ángel García", email = "miguelangel.garcia@gmail.com"}]
-license.file = "LICENSE"
+license = "MIT"
 readme = "README.md"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -13,7 +13,6 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Environment :: Console",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: User Interfaces",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
@@ -25,10 +24,6 @@ dependencies = [
     "editor>=1.6.0",
 ]
 requires-python = ">=3.10,<4.0"
-
-[build-system]
-requires = ["setuptools>=78.0", "wheel"]
-build-backend = "setuptools.build_meta"
 
 [project.urls]
 Homepage = "https://github.com/magmax/python-inquirer"
