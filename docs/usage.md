@@ -1,13 +1,14 @@
 ---
-substitutions:
-  inquirer theme: |-
-    ```{image} images/inquirer_theme.gif
-    :alt: Example of theme (GreenPassion)
-    ```
-  inquirer themes compare: |-
-    ```{image} images/inquirer_theme-compare.png
-    :alt: Example of theme (GreenPassion)
-    ```
+myst:
+    substitutions:
+      inquirer theme: |-
+        ```{image} images/inquirer_theme.gif
+        :alt: Example of theme (GreenPassion)
+        ```
+      inquirer themes compare: |-
+        ```{image} images/inquirer_theme-compare.png
+        :alt: Example of theme (GreenPassion)
+        ```
 ---
 
 # Usage
@@ -39,7 +40,7 @@ Each {code}`Question` require some common arguments. So, you just need to know w
 +-------------+--------------------------------------------------------+
 ```
 
-There are pictures of some of them in the [Examples] section.
+There are pictures of some of them in the [Examples](examples) section.
 
 ## Question Arguments
 
@@ -299,5 +300,3 @@ The function should return what to replace the entire current input with as a `s
 ```{literalinclude} ../examples/text_autocomplete.py
 
 ```
-
-[examples]: examples.html

@@ -1,53 +1,52 @@
 from __future__ import annotations
-from typing import Any, Callable
+
+from typing import Any
+
+from collections.abc import Callable
 
 from inquirer import questions
-from inquirer.render import Render
 from inquirer.render.console import ConsoleRender
 
 
 def text(
     message: str,
     autocomplete: Callable[[str, int], str | None] | None = None,
-    render: Render | ConsoleRender | None = None,
     **kwargs: Any,
-):
-    render = render or ConsoleRender()
+) -> str:
     question = questions.Text(name="", message=message, autocomplete=autocomplete, **kwargs)
-    return render.render(question)
+    return ConsoleRender().render(question)
 
 
-def editor(message: str, render: Render | ConsoleRender | None = None, **kwargs: Any) -> str:
-    render = render or ConsoleRender()
+def editor(message: str, **kwargs: Any) -> str:
+    if kwargs.get("render") is not None:
+        raise ValueError(
+            "The 'render' argument is not supported for the editor question.",
+            kwargs["render"],
+        )
     question = questions.Editor(name="", message=message, **kwargs)
-    return render.render(question)
+    return ConsoleRender().render(question)
 
 
-def password(message: str, render: Render | ConsoleRender | None = None, **kwargs: Any) -> str:
-    render = render or ConsoleRender()
+def password(message: str, **kwargs: Any) -> str:
     question = questions.Password(name="", message=message, **kwargs)
-    return render.render(question)
+    return ConsoleRender().render(question)
 
 
-def confirm(message: str, render: Render | ConsoleRender | None = None, **kwargs: Any) -> bool:
-    render = render or ConsoleRender()
+def confirm(message: str, **kwargs: Any) -> bool:
     question = questions.Confirm(name="", message=message, **kwargs)
-    return render.render(question)
+    return ConsoleRender().render(question)
 
 
-def list_input(message: str, render: Render | ConsoleRender | None = None, **kwargs: Any):
-    render = render or ConsoleRender()
+def list_input(message: str, **kwargs: Any) -> str | list[str]:
     question = questions.List(name="", message=message, **kwargs)
-    return render.render(question)
+    return ConsoleRender().render(question)
 
 
-def checkbox(message: str, render: Render | ConsoleRender | None = None, **kwargs: Any) -> list[str]:
-    render = render or ConsoleRender()
+def checkbox(message: str, **kwargs: Any) -> list[str]:
     question = questions.Checkbox(name="", message=message, **kwargs)
-    return render.render(question)
+    return ConsoleRender().render(question)
 
 
-def path(message: str, render: Render | ConsoleRender | None = None, **kwargs: Any) -> str:
-    render = render or ConsoleRender()
+def path(message: str, **kwargs: Any) -> str:
     question = questions.Path(name="", message=message, **kwargs)
-    return render.render(question)
+    return ConsoleRender().render(question)

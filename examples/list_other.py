@@ -8,9 +8,7 @@ import inquirer  # noqa
 
 
 questions = [
-    inquirer.List(
-        "size", message="What size do you need?", choices=["Jumbo", "Large", "Standard"], carousel=True, other=True
-    ),
+    inquirer.List("size", message="What size do you need?", choices=["Jumbo", "Large", "Standard"], carousel=True, other=True),
 ]
 
 answers = inquirer.prompt(questions)

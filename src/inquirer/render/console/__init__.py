@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import sys
 import textwrap
 from typing import Any, Literal
@@ -6,19 +7,18 @@ from typing import Any, Literal
 from blessed import Terminal
 
 from inquirer import errors
-from inquirer import events
 from inquirer.events import KeyEventGenerator
+from inquirer.questions import Question
 from inquirer.themes import Theme
 
-from inquirer.render.console._checkbox import Checkbox
-from inquirer.render.console._confirm import Confirm
-from inquirer.render.console._editor import Editor
-from inquirer.render.console._list import List
-from inquirer.render.console._password import Password
-from inquirer.render.console._path import Path
-from inquirer.render.console._text import Text
-from inquirer.render.console.base import BaseConsoleRender
-from inquirer.questions import Question
+from ._checkbox import Checkbox
+from ._confirm import Confirm
+from ._editor import Editor
+from ._list import List
+from ._password import Password
+from ._path import Path
+from ._text import Text
+from .base import BaseConsoleRender
 
 
 class ConsoleRender:
@@ -36,7 +36,7 @@ class ConsoleRender:
         self._position = 0
         self._theme = theme or Theme()
 
-    def render(self, question: Question, answers: dict[str, Any] | None = None):
+    def render(self, question: Question, answers: dict[str, Any] | None = None) -> Any:
         question.answers = answers or {}
 
         if question.ignore:
@@ -78,21 +78,17 @@ class ConsoleRender:
 
     def _print_options(self, render: BaseConsoleRender) -> None:
         for message, symbol, color in render.get_options():
-            if hasattr(message, "decode"):  # python 2
-                message = message.decode("utf-8")
             self.print_line(" {color}{s} {m}{t.normal}", m=message, color=color, s=symbol)
 
     def _print_header(self, render: BaseConsoleRender) -> None:
         base = render.get_header()
+        header = textwrap.shorten(base, width=self.width - 9, placeholder="...")
 
-        header = base[: self.width - 9] + "..." if len(base) > self.width - 6 else base
-        default_value = " ({color}{default}{normal})".format(
-            default=render.question.default, color=self._theme.Question.default_color, normal=self.terminal.normal
-        )
+        default_value = f" ({self._theme.Question['default_color']}{render.question.default}{self.terminal.normal})"
         show_default = render.question.default and render.show_default
         header += default_value if show_default else ""
         msg_template = (
-            "{t.move_up}{t.clear_eol}{tq.brackets_color}[" "{tq.mark_color}?{tq.brackets_color}]{t.normal} {msg}"
+            "{t.move_up}{t.clear_eol}{tq[brackets_color]}[{tq[mark_color]}?{tq[brackets_color]}]{t.normal} {msg}"
         )
 
         # ensure any user input with { or } will not cause a formatting error
@@ -109,7 +105,7 @@ class ConsoleRender:
         hint = ""
         if render.question.hints is not None:
             hint = render.get_hint()
-        color = self._theme.Question.mark_color
+        color = self._theme.Question["mark_color"]
         if hint:
             self.print_str(
                 f"\n{msg_template}", msg=hint, color=color, lf=not render.title_inline, tq=self._theme.Question
@@ -118,8 +114,7 @@ class ConsoleRender:
     def _process_input(self, render: BaseConsoleRender) -> None:
         try:
             ev = self._event_gen.next()
-            if isinstance(ev, events.KeyPressed):
-                render.process_input(ev.value)
+            render.process_input(ev.value)
         except errors.ValidationError as e:
             self._previous_error = e.value
         except errors.EndOfInput as e:
@@ -189,6 +184,9 @@ class ConsoleRender:
         if lf:
             self._position += 1
 
+        # if "tq" in kwargs: set qt.brackets_color to empty string if not set
+        if "tq" in kwargs and "brackets_color" in kwargs["tq"] and kwargs["tq"]["brackets_color"] is None:
+            kwargs["tq"].brackets_color = self.terminal.normal
         print(base.format(t=self.terminal, **kwargs), end="\n" if lf else "")
         sys.stdout.flush()
 

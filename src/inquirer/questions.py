@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import json
 import pathlib
-from typing import Any, Callable, Literal, Sequence, cast
+from typing import Any, Literal, cast
+
+from collections.abc import Callable, Iterable, Sequence
 
 from inquirer import errors
 from inquirer.render.console._other import GLOBAL_OTHER_CHOICE, OtherChoice
 
-
 type ValidatorType = bool | Callable[[dict[str, Any], Any], bool]
 type MessageType = str | Callable[[dict[str, Any]], str]
-type ChoiceType[T: Any] = int | str | tuple[str, T] | OtherChoice
+type ChoiceType[T: Any] = object | int | str | tuple[str, T] | OtherChoice
 type IgnoreType = bool | Callable[[Any], bool] | Callable[[Any], None]
 
 
@@ -28,10 +29,10 @@ class TaggedValue[T]:
     def __repr__(self) -> str:
         return repr(self.value)
 
-    def __eq__(self, other: tuple[str, T] | TaggedValue[T]) -> bool:
+    def __eq__(self, other: Any | tuple[str, T] | TaggedValue[T]) -> bool:
         if isinstance(other, TaggedValue):
             return (
-                other.value == self.value
+                other.value == self.value  # type: ignore
             )  # error here because type of other is not known. TaggedValue[T] is not runtime
         if isinstance(other, tuple):
             return other == self.tuple
@@ -48,18 +49,18 @@ type QuestionKind = Literal["text", "editor", "password", "confirm", "list", "ch
 
 
 class Question:
-    kind: QuestionKind
+    kind: QuestionKind = "base question"  # type: ignore
 
     def __init__(
         self,
         name: str,
         message: MessageType = "",
-        choices: Sequence[ChoiceType[Any]] | None = None,
-        default: bool | str | list[str] | Callable[[Any], bool | str] | None = None,
+        choices: Iterable[ChoiceType[Any]] | None = None,
+        default: object | bool | str | list[str] | Callable[[Any], bool | str] | None = None,
         ignore: IgnoreType = False,
         validate: ValidatorType = True,
         show_default: bool = False,
-        hints: dict[str, str] | None = None,
+        hints: dict[str, str] | dict[tuple[str, str], str] | None = None,
         other: bool = False,
     ):
         self.name = name
@@ -93,8 +94,11 @@ class Question:
         return bool(self._solve(self._ignore))
 
     @property
-    def message(self):
-        return self._solve(self._message)
+    def message(self) -> str:
+        temp = self._solve(self._message)
+        if not isinstance(temp, str):
+            raise TypeError(f"Message must be a string, not {type(temp)}")
+        return temp
 
     @property
     def default(self):
@@ -106,10 +110,10 @@ class Question:
             yield (TaggedValue(*choice) if isinstance(choice, tuple) and len(choice) == 2 else choice)
 
     @property
-    def choices(self) -> Sequence[ChoiceType[Any]]:
+    def choices(self) -> list[ChoiceType[Any]]:
         return list(self.choices_generator)
 
-    def validate(self, current: Sequence[ChoiceType[Any]]):
+    def validate(self, current: ChoiceType[Any] | None):
         try:
             if self._solve(self._validate, current):
                 return
@@ -118,7 +122,10 @@ class Question:
         raise errors.ValidationError(current)
 
     def _solve(
-        self, prop: Callable[[dict[str, str]], Any] | str | Any, *args: Sequence[ChoiceType[Any]], **kwargs: Any
+        self,
+        prop: Callable[[dict[str, str]], Any] | str | Any,
+        *args: Sequence[ChoiceType[Any]] | ChoiceType[Any] | None,
+        **kwargs: Any,
     ):
         if callable(prop):
             return prop(self.answers, *args, **kwargs)
@@ -136,11 +143,19 @@ class Text(Question):
         message: MessageType = "",
         default: bool | str | Callable[[Any], bool | str] | None = None,
         autocomplete: Callable[[str, int], str | None] | None = None,
+        ignore: Callable[[str | dict[str, str]], bool] | bool = False,
+        validate: Callable[[Any, Any], bool] | bool = True,
         **kwargs: Any,
     ):
         super().__init__(
-            name, message=message, default=str(default) if default and not callable(default) else default, **kwargs
+            name,
+            message=message,
+            default=str(default) if default and not callable(default) else default,
+            validate=validate,
+            ignore=ignore,
+            **kwargs,
         )
+
         self.autocomplete = autocomplete
 
 
@@ -154,6 +169,7 @@ class Password(Text):
 
 class Editor(Text):
     kind = "editor"
+    validate: Callable[[Any, str], bool]  # type: ignore
 
 
 class Confirm(Question):
@@ -170,9 +186,9 @@ class List(Question):
         self,
         name: str,
         message: MessageType = "",
-        choices: Sequence[ChoiceType[Any]] | None = None,
+        choices: Iterable[ChoiceType[Any]] | None = None,
         hints: dict[str, str] | None = None,
-        default: Any = None,
+        default: str | list[str] | None = None,
         ignore: IgnoreType = False,
         validate: ValidatorType = True,
         carousel: bool = False,
@@ -191,8 +207,8 @@ class Checkbox(Question):
         self,
         name: str,
         message: MessageType = "",
-        choices: Sequence[ChoiceType[Any]] | None = None,
-        hints: dict[str, str] | None = None,
+        choices: Iterable[ChoiceType[Any]] | None = None,
+        hints: dict[tuple[str, str], str] | None = None,
         locked: list[str] | None = None,
         default: list[str] | None = None,
         ignore: IgnoreType = False,
@@ -212,13 +228,15 @@ class Path(Text):
     FILE = "file"
     DIRECTORY = "directory"
 
+    type PathType = Literal["any", "file", "directory"]
+
     kind = "path"
 
     def __init__(
         self,
         name: str,
         default: str | None = None,
-        path_type: Literal["any", "file", "directory"] = "any",
+        path_type: PathType = "any",
         exists: bool | None = None,
         **kwargs: Any,
     ):
@@ -234,10 +252,10 @@ class Path(Text):
         if default is not None:
             try:
                 self.validate(default)
-            except errors.ValidationError:
-                raise ValueError("Default value '{}' is not valid based on " "your Path's criteria".format(default))
+            except errors.ValidationError as ex:
+                raise ValueError("Default value '{default}' is not valid based on your Path's criteria") from ex
 
-    def validate(self, current: str | None) -> None:
+    def validate(self, current: str | None) -> None:  # type: ignore
         super().validate(current)
 
         if current is None:
@@ -274,7 +292,7 @@ class Path(Text):
 
 def question_factory(kind: QuestionKind, *args: Any, **kwargs: Any) -> Question:
     # if 'name' not in args and 'name' not in kwargs:
-    #     raise errors.ValidationError("name", "Name is required for all questions.")
+    #     raise errors.UnknownQuestionTypeError("name", "Name is required for all questions.")
     for cl in (Text, Editor, Password, Confirm, List, Checkbox, Path):
         if cl.kind == kind:
             return cl(*args, **kwargs)

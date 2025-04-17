@@ -16,6 +16,7 @@ from inquirer.shortcuts import list_input
 from inquirer.shortcuts import password
 from inquirer.shortcuts import path
 from inquirer.shortcuts import text
+from inquirer import errors
 
 
 __all__ = [
@@ -37,4 +38,5 @@ __all__ = [
     "list_input",
     "checkbox",
     "path",
+    "errors",
 ]

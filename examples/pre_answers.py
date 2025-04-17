@@ -19,10 +19,7 @@ if __name__ == "__main__":
         ),
         inquirer.Text(
             "organization",
-            message=(
-                "If this is a repo from a organization please enter the organization name,"
-                " if not just leave this blank"
-            ),
+            message=("If this is a repo from a organization please enter the organization name, if not just leave this blank"),
         ),
         inquirer.Confirm(
             "correct",

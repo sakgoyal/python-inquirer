@@ -1,5 +1,4 @@
 from __future__ import annotations
-import collections
 import json
 
 from typing import TypedDict
@@ -48,29 +47,14 @@ def load_theme_from_dict(dict_theme: Loader) -> Theme:
     Color values should be string representing valid blessings.Terminal colors and fallback to the given color
     """
     t = Theme()
-    # This does not use the Terminal colors
-    # t.Question.update(dict_theme.get("Question") or {})
-    # t.Editor  .update(dict_theme.get("Editor") or {})
-    # t.Checkbox.update(dict_theme.get("Checkbox") or {})
-    # t.List    .update(dict_theme.get("List") or {})
     # we need to transform them to terminal color values first
     for question_type, settings in dict_theme.items():
-        if question_type not in vars(t):
-            raise errors.ThemeError(
-                "Error while parsing theme. Question type " "`{}` not found or not customizable.".format(question_type)
-            )
-
-        # calculating fields of namedtuple, hence the filtering
-        question_fields = list(filter(lambda x: not x.startswith("_"), vars(getattr(t, question_type))))
-
-        for field, value in settings.items():
-            if field not in question_fields:
-                raise errors.ThemeError(
-                    "Error while parsing theme. Field "
-                    "`{}` invalid for question type `{}`".format(field, question_type)
-                )
-            actual_value = getattr(term, value) or value
-            setattr(getattr(t, question_type), field, actual_value)
+        for field, value in settings.items():  # type: ignore
+            dict_theme[question_type][field] = term.__getattr__(value) or value  # type: ignore
+    t.Question.update(dict_theme.get("Question", {}))
+    t.Editor.update(dict_theme.get("Editor", {}))
+    t.Checkbox.update(dict_theme.get("Checkbox", {}))
+    t.List.update(dict_theme.get("List", {}))
     return t
 
 
@@ -101,7 +85,7 @@ class QuestionTheme(TypedDict):
 
 
 class EditorTheme(TypedDict):
-    opening_prompt: str
+    opening_prompt_color: str
 
 
 class CheckboxTheme(TypedDict):
@@ -121,56 +105,70 @@ class ListTheme(TypedDict):
 
 
 class Theme:
-    def __init__(self):
-        self.Question = collections.namedtuple("question", "mark_color brackets_color default_color")
-        self.Editor = collections.namedtuple("editor", "opening_prompt")
-        self.Checkbox = collections.namedtuple(
-            "common",
-            "selection_color selection_icon selected_color unselected_color "
-            "selected_icon unselected_icon locked_option_color",
-        )
-        self.List = collections.namedtuple("List", "selection_color selection_cursor unselected_color")
-        self.Question.mark_color = term.yellow
-        self.Question.brackets_color = term.normal
-        self.Question.default_color = term.normal
-        self.Editor.opening_prompt_color = term.bright_black
-        self.Checkbox.selection_color = term.cyan
-        self.Checkbox.selection_icon = ">"
-        self.Checkbox.selected_icon = "[X]"
-        self.Checkbox.selected_color = term.yellow + term.bold
-        self.Checkbox.unselected_color = term.normal
-        self.Checkbox.unselected_icon = "[ ]"
-        self.Checkbox.locked_option_color = term.gray50
-        self.List.selection_color = term.cyan
-        self.List.selection_cursor = ">"
-        self.List.unselected_color = term.normal
+    def __init__(self) -> None:
+        self.Question: QuestionTheme = {
+            "brackets_color": term.normal,
+            "mark_color": term.yellow,
+            "default_color": term.normal,
+        }
+        self.Editor: EditorTheme = {
+            "opening_prompt_color": term.normal,
+        }
+        self.Checkbox: CheckboxTheme = {
+            "selection_color": term.cyan,
+            "selection_icon": ">",
+            "selected_icon": "[X]",
+            "selected_color": term.yellow + term.bold,
+            "unselected_color": term.normal,
+            "unselected_icon": "[ ]",
+            "locked_option_color": term.gray50,
+        }
+        self.List: ListTheme = {
+            "selection_color": term.cyan,
+            "selection_cursor": ">",
+            "unselected_color": term.normal,
+        }
+        self.Question["mark_color"] = term.yellow
+        self.Question["brackets_color"] = term.normal
+        self.Question["default_color"] = term.normal
+        self.Editor["opening_prompt_color"] = term.bright_black
+        self.Checkbox["selection_color"] = term.cyan
+        self.Checkbox["selection_icon"] = ">"
+        self.Checkbox["selected_icon"] = "[X]"
+        self.Checkbox["selected_color"] = term.yellow + term.bold
+        self.Checkbox["unselected_color"] = term.normal
+        self.Checkbox["unselected_icon"] = "[ ]"
+        self.Checkbox["locked_option_color"] = term.gray50
+        self.List["selection_color"] = term.cyan
+        self.List["selection_cursor"] = ">"
+        self.List["unselected_color"] = term.normal
 
 
 class GreenPassion(Theme):
     def __init__(self):
         super().__init__()
-        self.Question.brackets_color = term.bright_green
-        self.Checkbox.selection_color = term.bold_black_on_bright_green
-        self.Checkbox.selection_icon = "❯"
-        self.Checkbox.selected_icon = "◉"
-        self.Checkbox.selected_color = term.green
-        self.Checkbox.unselected_icon = "◯"
-        self.List.selection_color = term.bold_black_on_bright_green
-        self.List.selection_cursor = "❯"
+        self.Question["brackets_color"] = term.bright_green
+        self.Checkbox["selection_color"] = term.bold_black_on_bright_green
+        self.Checkbox["selection_icon"] = "❯"
+        self.Checkbox["selected_icon"] = "◉"
+        self.Checkbox["selected_color"] = term.green
+        self.Checkbox["unselected_icon"] = "◯"
+        self.List["selection_color"] = term.bold_black_on_bright_green
+        self.List["selection_cursor"] = "❯"
 
 
 class BlueComposure(Theme):
     def __init__(self):
         super().__init__()
-        self.Question.brackets_color = term.dodgerblue
-        self.Question.default_color = term.deepskyblue2
-        self.Checkbox.selection_icon = "➤"
-        self.Checkbox.selection_color = term.bold_black_on_darkslategray3
-        self.Checkbox.selected_icon = "☒"
-        self.Checkbox.selected_color = term.cyan3
-        self.Checkbox.unselected_icon = "☐"
-        self.List.selection_color = term.bold_black_on_darkslategray3
-        self.List.selection_cursor = "➤"
+        self.Question["brackets_color"] = term.dodgerblue
+        self.Question["default_color"] = term.deepskyblue2
+        self.Checkbox["selection_icon"] = "➤"
+        self.Checkbox["selection_color"] = term.bold_black_on_darkslategray3
+        self.Checkbox["selected_icon"] = "☒"
+        self.Checkbox["selected_color"] = term.cyan3
+        self.Checkbox["unselected_icon"] = "☐"
+        self.List["selection_color"] = term.bold_black_on_darkslategray3
+        self.List["selection_cursor"] = "➤"
 
 
 class ThemeError(AttributeError):

@@ -17,7 +17,7 @@ installation
 usage
 examples
 contributing
-Code of Conduct <codeofconduct>
+Code of Conduct <CODE_OF_CONDUCT>
 license
 modules
 ```
@@ -27,6 +27,5 @@ modules
 - {ref}`genindex`
 - {ref}`modindex`
 
-[contributor guide]: contributing.html
 [download the code from github]: https://github.com/magmax/python-inquirer
 [inquirer.js]: https://github.com/SBoudrias/Inquirer.js

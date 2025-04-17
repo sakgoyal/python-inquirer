@@ -1,3 +1,4 @@
+# type: ignore
 import sys
 import unittest
 from re import escape
@@ -16,7 +17,7 @@ class CheckTest(unittest.TestCase):
 
     def test_default_input(self):
         self.sut.send(key.ENTER)
-        self.sut.expect(r"{'interests': \['Computers', 'Books'\]}.*", timeout=1)  # noqa
+        self.sut.expect(r"{'interests': \['Computers', 'Books'\]}.*", timeout=1)
 
     def test_select_the_third(self):
         self.sut.send(key.DOWN)
@@ -54,7 +55,7 @@ class CheckTest(unittest.TestCase):
         self.sut.expect(r"{'interests': \['Computers'\]}.*", timeout=1)  # noqa
 
     def test_select_last(self):
-        for i in range(10):
+        for _ in range(10):
             self.sut.send(key.DOWN)
         self.sut.send(key.SPACE)
         self.sut.send(key.ENTER)
@@ -92,14 +93,14 @@ class CheckCarouselTest(unittest.TestCase):
         self.sut.expect(r"{'interests': \['Computers', 'Books', 'History'\]}.*", timeout=1)  # noqa
 
     def test_out_of_bounds_down(self):
-        for i in range(6):
+        for _ in range(6):
             self.sut.send(key.DOWN)
             # Not looking at what we expect along the way,
             # let the last "expect" check that we got the right result
             self.sut.expect(">.*", timeout=1)
         self.sut.send(key.SPACE)
         self.sut.send(key.ENTER)
-        self.sut.expect(r"{'interests': \['Books'\]}.*", timeout=1)  # noqa
+        self.sut.expect(r"{'interests': \['Books'\]}.*", timeout=1)
 
 
 @unittest.skipUnless(sys.platform.startswith("lin"), "Linux only")
@@ -117,7 +118,7 @@ class CheckOtherTest(unittest.TestCase):
         self.sut.send("Hello world")
         self.sut.expect(r"Hello world.*", timeout=1)
         self.sut.send(key.ENTER)
-        self.sut.expect(rf"> {escape(self.theme.Checkbox.selected_icon)} Hello world[\s\S]*\+ Other.*", timeout=1)
+        self.sut.expect(rf"> {escape(self.theme.Checkbox['selected_icon'])} Hello world[\s\S]*\+ Other.*", timeout=1)
         self.sut.send(key.ENTER)
         self.sut.expect(r"{'interests': \['Computers', 'Books', 'Hello world'\]}", timeout=1)  # noqa
 
@@ -133,7 +134,7 @@ class CheckOtherTest(unittest.TestCase):
 
     def test_other_select_choice(self):
         self.sut.send(key.SPACE)
-        self.sut.expect(rf"{escape(self.theme.Checkbox.unselected_icon)} Computers.*", timeout=1)
+        self.sut.expect(rf"{escape(self.theme.Checkbox['unselected_icon'])} Computers.*", timeout=1)
         self.sut.send(key.ENTER)
         self.sut.expect(r"{'interests': \['Books'\]}", timeout=1)  # noqa
 

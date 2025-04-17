@@ -1,6 +1,6 @@
 from inquirer import errors
 from inquirer import questions
-from inquirer.render import ConsoleRender
+from inquirer.render.console import ConsoleRender
 from tests.integration.console_render import helper
 
 

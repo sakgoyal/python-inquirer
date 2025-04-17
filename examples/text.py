@@ -8,7 +8,7 @@ sys.path.append(os.path.realpath("."))
 import inquirer  # noqa
 
 
-def phone_validation(answers, current):
+def phone_validation(_answers: dict[str, str], current: str):
     if not re.match(r"\+?\d[\d ]+\d", current):
         raise inquirer.errors.ValidationError("", reason="I don't like your phone number!")
 

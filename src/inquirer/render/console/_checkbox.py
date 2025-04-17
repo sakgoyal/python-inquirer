@@ -1,18 +1,17 @@
-from typing import Any
+from typing import Any, cast
 
 from readchar import key
 
 from inquirer import errors
-from inquirer.render.console._other import GLOBAL_OTHER_CHOICE
-from inquirer.render.console.base import MAX_OPTIONS_DISPLAYED_AT_ONCE
-from inquirer.render.console.base import BaseConsoleRender
-from inquirer.render.console.base import half_options
-from ...themes import ThemeError
-from ...questions import ChoiceType
 from inquirer.questions import Checkbox as CheckboxQuestion
+
+from ...themes import ThemeError
+from ._other import GLOBAL_OTHER_CHOICE
+from .base import MAX_OPTIONS_DISPLAYED_AT_ONCE, BaseConsoleRender, half_options
 
 
 class Checkbox(BaseConsoleRender):
+    question: CheckboxQuestion
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
@@ -21,14 +20,13 @@ class Checkbox(BaseConsoleRender):
         self.current = 0
 
     def get_hint(self) -> str:
-        try:
-            hint = self.question.hints[self.question.choices[self.current]]
-            return hint or ""
-        except KeyError:
+        temp: list[str] = self.question.choices  # type: ignore
+        if not self.question.hints:
             return ""
+        return cast(dict[str, str], self.question.hints).get(temp[self.current], "")
 
-    def default_choices(self) -> list[ChoiceType[Any]]:
-        default = self.question.default or []
+    def default_choices(self):
+        default = cast(list[str], self.question.default) or []
         return default + self.locked
 
     @property
@@ -58,16 +56,18 @@ class Checkbox(BaseConsoleRender):
         is_in_middle = half_options < self.current < ending_milestone
         is_in_end = self.current >= ending_milestone
         for index, choice in enumerate(cchoices):
+            if not self.theme:
+                raise ThemeError("Theme not set for Checkbox")
             if (
                 (is_in_middle and self.current - half_options + index in self.selection)
                 or (is_in_beginning and index in self.selection)
                 or (is_in_end and index + max(len(choices) - MAX_OPTIONS_DISPLAYED_AT_ONCE, 0) in self.selection)
-            ):  # noqa
-                symbol = self.theme.Checkbox.selected_icon
-                color = self.theme.Checkbox.selected_color
+            ):
+                symbol = self.theme.Checkbox["selected_icon"]
+                color = self.theme.Checkbox["selected_color"]
             else:
-                symbol = self.theme.Checkbox.unselected_icon
-                color = self.theme.Checkbox.unselected_color
+                symbol = self.theme.Checkbox["unselected_icon"]
+                color = self.theme.Checkbox["unselected_color"]
 
             selector = " "
             end_index = ending_milestone + index - half_options - 1
@@ -76,11 +76,11 @@ class Checkbox(BaseConsoleRender):
                 or (is_in_beginning and index == self.current)
                 or (is_in_end and end_index == self.current)
             ):
-                selector = self.theme.Checkbox.selection_icon
-                color = self.theme.Checkbox.selection_color
+                selector = self.theme.Checkbox["selection_icon"]
+                color = self.theme.Checkbox["selection_color"]
 
             if choice in self.locked:
-                color = self.theme.Checkbox.locked_option_color
+                color = self.theme.Checkbox["locked_option_color"]
 
             if choice == GLOBAL_OTHER_CHOICE:
                 symbol = "+"
@@ -124,7 +124,7 @@ class Checkbox(BaseConsoleRender):
         elif pressed == key.CTRL_I:
             self.selection = [i for i in range(len(self.question.choices)) if i not in self.selection]
         elif pressed == key.ENTER:
-            result = []
+            result: list[Any] = []
             for x in self.selection:
                 value = self.question.choices[x]
                 result.append(getattr(value, "value", value))
@@ -132,7 +132,7 @@ class Checkbox(BaseConsoleRender):
         elif pressed == key.CTRL_C:
             raise KeyboardInterrupt()
 
-    def other_input(self) -> None:
+    def other_input(self):
         other = super().other_input()
 
         # Clear the print that inquirer.text made

@@ -1,15 +1,8 @@
----
-substitutions:
-  MIT license: |-
-    ```{image} https://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png
-    ```
----
-
 # The MIT License (MIT)
 
 Copyright (c) 2014 Miguel Ángel García \<<mailto:miguelangel.garcia@gmail.com>>
 
-{{ MIT license }}
+<img src="https://opensource.org/wp-content/uploads/2009/06/OSIApproved.svg" alt="OSI Logo" width="200" height="200">
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -1,16 +1,17 @@
-from typing import Any
+from typing import Any, cast
+
 from readchar import key
 
 from inquirer import errors
-from inquirer.render.console._other import GLOBAL_OTHER_CHOICE
-from inquirer.render.console.base import MAX_OPTIONS_DISPLAYED_AT_ONCE
-from inquirer.render.console.base import BaseConsoleRender
-from inquirer.render.console.base import half_options
+
+from ...questions import List as ListQuestion
 from ...themes import ThemeError
-from inquirer.questions import List as ListQuestion
+from ._other import GLOBAL_OTHER_CHOICE
+from .base import MAX_OPTIONS_DISPLAYED_AT_ONCE, BaseConsoleRender, half_options
 
 
 class List(BaseConsoleRender):
+    question: ListQuestion
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
@@ -24,11 +25,11 @@ class List(BaseConsoleRender):
     def get_hint(self) -> str:
         try:
             choice = self.question.choices[self.current]
-            # if not self.question.hints:
-            #     raise KeyError()
-            # if not isinstance(choice, str):
-            #     raise KeyError()
-            hint = self.question.hints[choice]
+            if not self.question.hints:
+                raise KeyError()
+            if not isinstance(choice, str):
+                raise KeyError()
+            hint = cast(dict[str, str], self.question.hints)[choice]
             if hint:
                 return f"{choice}: {hint}"
             return f"{choice}"
@@ -36,7 +37,7 @@ class List(BaseConsoleRender):
             return ""
 
     def get_options(self):
-        choices = self.question.choices or []
+        choices = list(self.question.choices or [])
         if self.is_long:
             cmin = 0
             cmax = MAX_OPTIONS_DISPLAYED_AT_ONCE
@@ -66,11 +67,11 @@ class List(BaseConsoleRender):
                 or (is_in_beginning and index == self.current)
                 or (is_in_end and end_index == self.current)
             ):
-                color = self.theme.List.selection_color
-                symbol = "+" if choice == GLOBAL_OTHER_CHOICE else self.theme.List.selection_cursor
+                color = self.theme.List["selection_color"]
+                symbol = "+" if choice == GLOBAL_OTHER_CHOICE else self.theme.List["selection_cursor"]
             else:
-                color = self.theme.List.unselected_color
-                symbol = " " if choice == GLOBAL_OTHER_CHOICE else " " * len(self.theme.List.selection_cursor)
+                color = self.theme.List["unselected_color"]
+                symbol = " " if choice == GLOBAL_OTHER_CHOICE else " " * len(self.theme.List["selection_cursor"])
             yield choice, symbol, color
 
     def process_input(self, pressed: str):
@@ -102,8 +103,8 @@ class List(BaseConsoleRender):
         if pressed == key.CTRL_C:
             raise KeyboardInterrupt()
 
-    def _current_index(self):
+    def _current_index(self) -> int:
         try:
-            return self.question.choices.index(self.question.default)
+            return self.question.choices.index(cast(str, self.question.default))
         except ValueError:
             return 0

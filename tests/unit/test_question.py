@@ -1,12 +1,12 @@
 import pathlib
 import shutil
-import tempfile
-from typing import Literal
-import unittest
 import sys
+import tempfile
+import unittest
+from typing import Literal, cast
 
-from inquirer import errors
-from inquirer import questions
+from inquirer import errors, questions
+from inquirer.questions import Path
 
 
 class BaseQuestionTests(unittest.TestCase):
@@ -207,7 +207,7 @@ class BaseQuestionTests(unittest.TestCase):
 
     def test_load_from_json_text_type(self):
         name = "foo"
-        q = questions.load_from_json(f'{"kind": "text", "name": "{name}"}')
+        q = questions.load_from_json(f'{{"kind": "text", "name": "{name}"}}')
         assert isinstance(q, questions.Text)
         self.assertEqual("text", q.kind)
         self.assertIsInstance(q, questions.Text)
@@ -255,7 +255,7 @@ class TestPathQuestion(unittest.TestCase):
     @unittest.skipUnless(sys.platform.startswith("lin"), "Linux only")
     def test_path_validation_linux(self):
         q = questions.Path("validation_test")
-        for path in []:
+        for path in cast(list[str], []):
             with self.assertRaises(errors.ValidationError):
                 q.validate(path)
 
@@ -267,7 +267,7 @@ class TestPathQuestion(unittest.TestCase):
                 q.validate(path)
 
     def test_path_type_validation_no_existence_check(self):
-        def do_test(path_type: Literal["any", "file", "directory"], path: str, result: bool = True):
+        def do_test(path_type: Path.PathType, path: str, result: bool = True):
             q = questions.Path("path_type_test", path_type=path_type)
             if result:
                 self.assertIsNone(q.validate(path))
@@ -310,7 +310,7 @@ class TestPathQuestion(unittest.TestCase):
         some_existing_file = root / "some_file"
         some_existing_file.touch()
 
-        def do_test(path_type: Literal["any", "file", "directory"], path: str | pathlib.Path, result: bool = True):
+        def do_test(path_type: Path.PathType, path: str | pathlib.Path, result: bool = True):
             q = questions.Path("path_type_test", exists=True, path_type=path_type)
             if result:
                 self.assertIsNone(q.validate(str(path)))
@@ -339,22 +339,22 @@ class TestPathQuestion(unittest.TestCase):
         some_file = root / "foo"
         some_dir = root / "foo/"
 
-        def do_test(exists, type):
-            q = questions.Path("test", exists=exists, path_type=type)
+        def do_test(exists: bool, ptype: Path.PathType):
+            q = questions.Path("test", exists=exists, path_type=ptype)
             with self.assertRaises(errors.ValidationError):
                 q.validate(str(some_dir))
 
         some_file.touch()
         try:
-            do_test(exists=True, type=questions.Path.DIRECTORY)
-            do_test(exists=False, type=questions.Path.DIRECTORY)
+            do_test(exists=True, ptype=questions.Path.DIRECTORY)
+            do_test(exists=False, ptype=questions.Path.DIRECTORY)
         finally:
             some_file.unlink()
 
         some_dir.mkdir()
         try:
-            do_test(exists=True, type=questions.Path.FILE)
-            do_test(exists=False, type=questions.Path.FILE)
+            do_test(exists=True, ptype=questions.Path.FILE)
+            do_test(exists=False, ptype=questions.Path.FILE)
         finally:
             some_dir.rmdir()
 
@@ -367,7 +367,9 @@ class TestPathQuestion(unittest.TestCase):
         some_existing_file = root / "some_file"
         some_existing_file.touch()
 
-        def do_test(default, path_type, exists, result=True):
+        def do_test(
+            default: pathlib.Path, path_type: Literal["any", "directory", "file"], exists: bool, result: bool = True
+        ):
             if result:
                 questions.Path("path", default=str(default), exists=exists, path_type=path_type)
             else:
@@ -389,10 +391,10 @@ class TestPathQuestion(unittest.TestCase):
         questions.Path("abs_path", path_type="directory")
 
         with self.assertRaises(ValueError):
-            questions.Path("abs_path", path_type=questions.Path.kind)
+            questions.Path("abs_path", path_type=questions.Path.kind)  # type: ignore
 
         with self.assertRaises(ValueError):
-            questions.Path("abs_path", path_type="false")
+            questions.Path("abs_path", path_type="false")  # type: ignore
 
 
 def test_tagged_value():

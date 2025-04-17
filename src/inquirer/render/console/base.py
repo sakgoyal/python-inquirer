@@ -1,12 +1,15 @@
 from __future__ import annotations
+
 from abc import abstractmethod
-from typing import Any, Generator
+from typing import Any, LiteralString
+
+from collections.abc import Generator
+
 from blessed import Terminal
 
 from inquirer.errors import ValidationError
-from inquirer.questions import ChoiceType, Question
+from inquirer.questions import Question
 from inquirer.themes import Theme
-
 
 MAX_OPTIONS_DISPLAYED_AT_ONCE = 15
 half_options = int(MAX_OPTIONS_DISPLAYED_AT_ONCE / 2)
@@ -31,13 +34,13 @@ class BaseConsoleRender:
         self.theme = theme
         self.show_default = show_default
 
-    def other_input(self):
+    def other_input(self) -> str | None:
         from inquirer.shortcuts import text  # Avoiding circular import
 
         other = text(self.question.message, autocomplete=getattr(self.question, "autocomplete", None))
         return other
 
-    def get_header(self):
+    def get_header(self) -> str:
         return self.question.message
 
     def get_hint(self) -> str:
@@ -46,7 +49,7 @@ class BaseConsoleRender:
     def get_current_value(self) -> str:
         return ""
 
-    def get_options(self):
+    def get_options(self) -> Generator[tuple[str, str | LiteralString, str], Any, None]:
         return []
 
     @abstractmethod

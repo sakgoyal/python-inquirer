@@ -11,9 +11,7 @@ choices_hints = {
 }
 
 questions = [
-    inquirer.Checkbox(
-        "interests", message="What are you interested in?", choices=choices_hints.keys(), hints=choices_hints
-    ),
+    inquirer.Checkbox("interests", message="What are you interested in?", choices=choices_hints.keys(), hints=choices_hints),
 ]
 
 answers = inquirer.prompt(questions)

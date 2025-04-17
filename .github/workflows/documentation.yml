@@ -27,16 +27,8 @@ jobs:
 
       - name: Upgrade pip
         run: |
-          pip install --force-reinstall --constraint=.github/workflows/constraints.txt pip pipx
+          pip install --upgrade pip pipx nox
           pip --version
-      - name: Install Poetry
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/python-constraints.txt poetry
-          poetry --version
-      - name: Install Nox
-        run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
           nox --version
       - name: Build documentation
         run: nox --force-color --session=docs-build

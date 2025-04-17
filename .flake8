@@ -1,5 +1,0 @@
-[flake8]
-select = B,B9,C,DAR,E,F,N,S,W
-ignore = W503
-max-line-length = 119
-docstring-convention = google

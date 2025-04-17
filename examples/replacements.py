@@ -2,13 +2,12 @@ import os
 import sys
 from pprint import pprint
 
-
 sys.path.append(os.path.realpath("."))
 import inquirer  # noqa
 
 
-def initials(answers):
-    return "Are these your initials? {}{}".format(answers["name"][0], answers["surname"][0])
+def initials(answers: dict[str, str]) -> str:
+    return f"Are these your initials? {answers['name'][0]}{answers['surname'][0]}"
 
 
 questions = [
@@ -18,6 +17,6 @@ questions = [
     inquirer.Confirm("initials", message=initials, default=True),
 ]
 
-answers = inquirer.prompt(questions)
+response = inquirer.prompt(questions)
 
-pprint(answers)
+pprint(response)

@@ -1,7 +1,10 @@
 import re
+from typing import Any
+
 from readchar import key
-from inquirer import questions, errors
-from inquirer.render import ConsoleRender
+
+from inquirer import errors, questions
+from inquirer.render.console import ConsoleRender
 from tests.integration.console_render import helper
 
 
@@ -81,7 +84,7 @@ class TextRenderTest(helper.BaseTestCase):
         variable = "foo"
         expected = "9999"
 
-        def raise_exc(_, current: str):
+        def raise_exc(_: Any, current: str):
             if current != "9999":
                 raise errors.ValidationError("", reason="Custom error")
             return True

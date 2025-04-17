@@ -1,8 +1,9 @@
 from unittest.mock import patch
+
 from readchar import key
-from inquirer import questions
-from inquirer import errors
-from inquirer.render import ConsoleRender
+
+from inquirer import errors, questions
+from inquirer.render.console import ConsoleRender
 from tests.integration.console_render import helper
 
 

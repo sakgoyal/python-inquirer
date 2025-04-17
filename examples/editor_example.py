@@ -8,9 +8,7 @@ import inquirer  # noqa
 
 
 questions = [
-    inquirer.Editor(
-        "poem", message="Write me a poem please", default="Roses are red,", validate=lambda _, x: x.count("\n") >= 2
-    ),
+    inquirer.Editor("poem", message="Write me a poem please", default="Roses are red,", validate=lambda _, x: x.count("\n") >= 2),
 ]
 
 answers = inquirer.prompt(questions)

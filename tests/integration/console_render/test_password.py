@@ -1,8 +1,10 @@
+from typing import Any
+
 from readchar import key
 
-from inquirer.render import ConsoleRender
-from inquirer.questions import Password
 from inquirer.errors import ValidationError
+from inquirer.questions import Password
+from inquirer.render.console import ConsoleRender
 from tests.integration.console_render import helper
 
 
@@ -80,7 +82,7 @@ class PasswordRenderTest(helper.BaseTestCase):
         message = "Foo message"
         variable = "Bar variable"
 
-        def validate(answers, current):
+        def validate(_answers: Any, _current: Any):
             return False
 
         question = Password(variable, message, validate=validate)
@@ -94,7 +96,7 @@ class PasswordRenderTest(helper.BaseTestCase):
         message = "Foo message"
         variable = "Bar variable"
 
-        def validate(answers, current):
+        def validate(_answers: Any, _current: Any):
             raise ValidationError("", reason="some reason")
 
         question = Password(variable, message, validate=validate)

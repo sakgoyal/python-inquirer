@@ -1,9 +1,9 @@
+# type: ignore
 import sys
 import unittest
 
 import pexpect
 from readchar import key
-
 
 expected_result = r"""\
 {'correct': True,\r\n

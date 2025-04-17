@@ -1,10 +1,6 @@
-from unittest.case import TestCase
 import sys
-
-try:
-    from StringIO import StringIO  # type: ignore
-except ImportError:
-    from io import StringIO
+from io import StringIO
+from unittest.case import TestCase
 
 from inquirer import events
 
